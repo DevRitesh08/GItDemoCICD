@@ -1,4 +1,5 @@
-# GitHub Actions: Jekyll Build & Deploy to GitHub Pages
+# GitHub Actions workflow to build and deploy a Jekyll site to GitHub Pages
+
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 on:
@@ -6,16 +7,21 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+# Required permissions for Pages deployment
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: write        # Needed to checkout private repos or push from actions
+  pages: write           # Required for GitHub Pages deployment
+  id-token: write        # Required for OIDC authentication
 
+# Prevent parallel deployments
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
+  # --------------------
+  #  Build Job
+  # --------------------
   build:
     runs-on: ubuntu-latest
 
@@ -29,7 +35,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.1'
+          ruby-version: '3.1'  # or use your preferred version
 
       - name: Cache Ruby gems
         uses: actions/cache@v3
@@ -44,16 +50,19 @@ jobs:
           bundle config set path 'vendor/bundle'
           bundle install
 
-      - name: Build with Jekyll
+      - name: Build Jekyll Site
         run: bundle exec jekyll build --verbose
         env:
           JEKYLL_ENV: production
 
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3  # ✅ UPDATED VERSION
+      - name: Upload GitHub Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site
 
+  # --------------------
+  #  Deploy Job
+  # --------------------
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -64,4 +73,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2  # (optional update from v1 to v2)
+        uses: actions/deploy-pages@v2
